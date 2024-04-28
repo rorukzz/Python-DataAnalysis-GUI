@@ -1,51 +1,75 @@
-import tkinter as tk
-from tkinter import filedialog
 import pandas as pd
 
-class DataAnalyzerApp(tk.Tk):
+class DataAnalyzerApp:
     def __init__(self):
-        super().__init__()
-        self.title("Data Analyzer")
-        self.geometry("600x400")
-
         self.data = None
+        self.selected_column = None
 
-        self.create_widgets()
-
-    def create_widgets(self):
-        self.file_label = tk.Label(self, text="No file selected")
-        self.file_label.pack(pady=10)
-
-        self.load_button = tk.Button(self, text="Select CSV File", command=self.load_csv)
-        self.load_button.pack(pady=5)
-
-        self.data_listbox = tk.Listbox(self, width=100)
-        self.data_listbox.pack(pady=10)
-
-        self.sort_button = tk.Button(self, text="Sort by Column", command=self.sort_data)
-        self.sort_button.pack(pady=5)
-
-    def load_csv(self):
-        file_path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
-        if file_path:
-            self.file_label.config(text=file_path)
-            self.data = pd.read_csv(file_path)
-            self.display_data()
+    def load_csv(self, file_path):
+        self.file_path = file_path
+        self.data = pd.read_csv(file_path)
+        self.display_data()
 
     def display_data(self):
-        self.data_listbox.delete(0, tk.END)
-        for row in self.data.values:
-            self.data_listbox.insert(tk.END, " | ".join(str(cell) for cell in row))
+        if self.data is not None:
+            print("Data Analyzer")
+            print("File Selected:", self.file_path)
+            print(self.data.head())
+        else:
+            print("No data to display")
 
     def sort_data(self):
         if self.data is not None:
-            selected_index = self.data_listbox.curselection()
-            if selected_index:
-                column_index = selected_index[0]
-                column_name = self.data.columns[column_index]
-                self.data.sort_values(by=column_name, inplace=True)
-                self.display_data()
+            if self.selected_column in self.data.columns:
+                self.data.sort_values(by=self.selected_column, inplace=True)
+                print("Data sorted by column:", self.selected_column)
+                print(self.data.head())
+            else:
+                print("Selected column not found in data")
+
+    def aggregate_data(self):
+        if self.data is not None:
+            if self.selected_column in self.data.columns:
+                aggregated_data = self.data.groupby(self.selected_column).size().reset_index(name='count')
+                print("Aggregated data by column:", self.selected_column)
+                print(aggregated_data)
+            else:
+                print("Selected column not found in data")
+
+    def convert_to_datetime(self):
+        if self.data is not None:
+            if self.selected_column in self.data.columns:
+                self.data[self.selected_column] = pd.to_datetime(self.data[self.selected_column])
+                print("Converted column to datetime:", self.selected_column)
+                print(self.data.head())
+            else:
+                print("Selected column not found in data")
 
 if __name__ == "__main__":
     app = DataAnalyzerApp()
-    app.mainloop()
+    file_path = input("Enter the path to the CSV file: ")
+    app.load_csv(file_path)
+
+    while True:
+        print("\nSelect an option:")
+        print("1. Sort data by column")
+        print("2. Aggregate data by column")
+        print("3. Convert column to datetime")
+        print("4. Exit")
+
+        option = input("Enter your choice (1-4): ")
+
+        if option == '1':
+            app.selected_column = input("Enter the column to sort by: ")
+            app.sort_data()
+        elif option == '2':
+            app.selected_column = input("Enter the column to aggregate by: ")
+            app.aggregate_data()
+        elif option == '3':
+            app.selected_column = input("Enter the column to convert to datetime: ")
+            app.convert_to_datetime()
+        elif option == '4':
+            print("Exiting program...")
+            break
+        else:
+            print("Invalid option. Please enter a number between 1 and 4.")
