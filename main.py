@@ -29,6 +29,7 @@ class DataAnalyzerApp:
     def apply_edits(self, edited_data):
         global global_edited_data
         global total_edits
+        global_edits_count
         global_edited_data
         global_edited_data = edited_data
         self.edits_count += 1
@@ -112,6 +113,44 @@ class DataAnalyzerApp:
         global_edited_data.to_csv(output_file, index=False)
         print("DataFrame saved to CSV file:", output_file)
 
+    def merge_dataframes(self):
+        global global_edited_data
+    def merge_dataframes(self):
+        global global_edited_data
+        if global_edited_data is None:
+            print("No DataFrame to merge.")
+            return
+
+        csv_files = []
+        for root, dirs, files in os.walk('.'):
+            for file in files:
+                if file.endswith(".csv"):
+                    csv_files.append(os.path.join(root, file))
+
+        print("Select CSV file to merge with:")
+        for i, file in enumerate(csv_files, 1):
+            print(f"{i}. {file}")
+
+        choice = int(input("Enter your choice: ")) - 1
+
+        if 0 <= choice < len(csv_files):
+            merge_file = csv_files[choice]
+            merge_df = pd.read_csv(merge_file)
+
+            # Prompt user for merge parameters
+            how = input("Enter how to merge (left, right, outer, inner): ")
+            on = input("Enter columns to join on (comma-separated): ").split(',')
+            left_on = input("Enter columns from left DataFrame to join on (comma-separated): ").split(',')
+            right_on = input("Enter columns from right DataFrame to join on (comma-separated): ").split(',')
+
+            # Perform merge
+            merged_df = pd.merge(global_edited_data, merge_df, how=how, on=on, left_on=left_on, right_on=right_on)
+            global_edited_data = merged_df
+            print("DataFrames merged successfully.")
+        else:
+            print("Invalid choice.")
+
+
 if __name__ == "__main__":
     app = DataAnalyzerApp()
     file_path = input("Enter the path to the CSV file: ")
@@ -124,9 +163,10 @@ if __name__ == "__main__":
         print("3. Convert column to datetime")
         print("4. Remove nulls from column")
         print("5. Save edited DataFrame as CSV")
-        print("6. Exit")
+        print("6. Merge with another DataFrame")
+        print("7. Exit")
 
-        option = input("Enter your choice (1-6): ")
+        option = input("Enter your choice (1-7): ")
 
         if option == '1':
             app.selected_column = input("Enter the column to sort by: ")
@@ -143,9 +183,11 @@ if __name__ == "__main__":
         elif option == '5':
             app.save_csv()
         elif option == '6':
+            app.merge_dataframes()
+        elif option == '7':
             print("Exiting program...")
             break
         else:
-            print("Invalid option. Please enter a number between 1 and 6.")
+            print("Invalid option. Please enter a number between 1 and 7.")
 
     print("Total edits performed:", total_edits)
